@@ -5,11 +5,11 @@ import github.io.julleb.raft_consensus_http.domain.model.RaftClusterInformation;
 import org.springframework.stereotype.Service;
 
 @Service
-public class HearbeatServiceImpl implements HeartbeatService {
+public class HeartbeatServiceImpl implements HeartbeatService {
     private final RaftClusterInformation raftClusterInformation;
     private final HeartbeatRepository heartbeatRepository;
 
-    public HearbeatServiceImpl(RaftClusterInformation raftClusterInformation,
+    public HeartbeatServiceImpl(RaftClusterInformation raftClusterInformation,
         HeartbeatRepository heartbeatRepository) {
         this.raftClusterInformation = raftClusterInformation;
         this.heartbeatRepository = heartbeatRepository;
