@@ -26,4 +26,9 @@ public class HearbeatServiceImpl implements HeartbeatService {
         }
         return true;
     }
+
+    @Override
+    public NodeState getNodeState() {
+        return raftClusterInformation.getNodeState();
+    }
 }
