@@ -8,8 +8,14 @@ import lombok.Setter;
 public class NodeState {
     //TODO, maybe it should be locks here.
     private int term;
-
     //leaderId points to the nodeIp
     private String leaderId;
     private String currentData;
+    private String nodeName;
+    private State state = State.FOLLOWER;
+
+    public enum State {
+        FOLLOWER,
+        LEADER
+    }
 }

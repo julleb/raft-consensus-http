@@ -6,15 +6,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class HearbeatServiceImpl implements HeartbeatService {
-
-    private final NodeState nodeState;
     private final RaftClusterInformation raftClusterInformation;
     private final HeartbeatRepository heartbeatRepository;
 
-    public HearbeatServiceImpl(NodeState nodeState,
-        RaftClusterInformation raftClusterInformation,
+    public HearbeatServiceImpl(RaftClusterInformation raftClusterInformation,
         HeartbeatRepository heartbeatRepository) {
-        this.nodeState = nodeState;
         this.raftClusterInformation = raftClusterInformation;
         this.heartbeatRepository = heartbeatRepository;
     }
@@ -22,7 +18,7 @@ public class HearbeatServiceImpl implements HeartbeatService {
     @Override
     public boolean isLeaderOnline() {
 
-        String leaderIp = nodeState.getLeaderId();
+        String leaderIp = raftClusterInformation.getNodeState().getLeaderId();
         try {
             heartbeatRepository.checkHeartbeat(leaderIp);
         } catch(RuntimeException e) {

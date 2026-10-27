@@ -7,11 +7,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @ConfigurationProperties(prefix = "raft.cluster")
 public class RaftClusterInformation {
-
-    private String nodeName;
     private List<String> ipOfNodes;
+    private final NodeState nodeState = new NodeState();
 
     void setIpOfNodes(List<String> ipOfNodes) {
         this.ipOfNodes = ipOfNodes;
+    }
+
+    void setNodeName(String nodeName) {
+        nodeState.setNodeName(nodeName);
     }
 }
