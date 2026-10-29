@@ -16,6 +16,7 @@ public class NodeState {
 
     public enum State {
         FOLLOWER,
-        LEADER
+        LEADER,
+        CANDIDATE,
     }
 }

@@ -1,4 +1,4 @@
-package github.io.julleb.raft_consensus_http.repositories.heartbeat;
+package github.io.julleb.raft_consensus_http.repository.heartbeat;
 
 import github.io.julleb.raft_consensus_http.domain.service.heartbeat.HeartbeatRepository;
 import org.springframework.stereotype.Repository;
