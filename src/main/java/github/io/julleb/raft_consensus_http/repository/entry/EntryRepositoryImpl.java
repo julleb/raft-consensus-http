@@ -22,13 +22,23 @@ public class EntryRepositoryImpl implements EntryRepository {
     @Override
     public EntryResponse sendEntry(String nodeIp, EntryRequest entryRequest) {
         String url = nodeIp + endpointUrl;
-        var entryRequestDto = new EntryRequestDto();
+        var entryRequestDto = EntryRequestDto.builder()
+            .term(entryRequest.getTerm())
+            .leaderId(entryRequest.getLeaderId())
+            .build();
 
         var responseDto = restClient.post()
+            .uri(url)
             .contentType(MediaType.APPLICATION_JSON)
-            .body(entryRequest)
+            .body(entryRequestDto)
             .retrieve()
             .body(EntryResponseDto.class);
-        return new EntryResponse();
+
+        if(responseDto == null) throw new RuntimeException("response is empty");
+
+        return EntryResponse.builder()
+            .term(responseDto.getTerm())
+            .success(responseDto.isSuccess())
+            .build();
     }
 }
