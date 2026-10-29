@@ -6,8 +6,10 @@ import github.io.julleb.raft_consensus_http.domain.model.RequestVote;
 import github.io.julleb.raft_consensus_http.domain.model.ResponseVote;
 import github.io.julleb.raft_consensus_http.domain.service.heartbeat.HeartbeatService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -16,29 +18,24 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class ElectionServiceImpl implements ElectionService {
     private final RaftClusterInformation raftClusterInformation;
-    private final HeartbeatService heartbeatService;
     private final RequestVoteRepository requestVoteRepository;
-
     //maps a term to a node it has voted for as a leader
-    private Map<Integer, String> termToVotedNode;
-
+    private final Map<Integer, String> termToVotedNode;
     private final int majority;
 
     public ElectionServiceImpl(RaftClusterInformation raftClusterInformation,
-        HeartbeatService heartbeatService,
         RequestVoteRepository requestVoteRepository) {
         this.raftClusterInformation = raftClusterInformation;
-        this.heartbeatService = heartbeatService;
         this.requestVoteRepository = requestVoteRepository;
         majority = (raftClusterInformation.getIpOfNodes().size() / 2) + 1;
+        termToVotedNode = new ConcurrentHashMap<>();
     }
 
     @Override
     public void electLeader() {
-        if(isLeaderUp()) return;
-
         //increment term
         NodeState nodeState = raftClusterInformation.getNodeState();
+        nodeState.setState(NodeState.State.CANDIDATE);
         int newTerm = nodeState.getTerm() + 1;
         nodeState.setTerm(newTerm);
 
@@ -50,16 +47,18 @@ public class ElectionServiceImpl implements ElectionService {
         votes++; //calculate my own vote
         if(votes < majority) {
             log.debug("I don't have majority to be the leader");
+            //before we set FOLLOWER, we need to check that we are a candidate
+            nodeState.setState(NodeState.State.FOLLOWER);
             return;
         }
-
-        //send im the leader to everyone
+        nodeState.setState(NodeState.State.LEADER);
     }
 
-    private boolean isLeaderUp() {
-        String leaderId = raftClusterInformation.getNodeState().getLeaderId();
-        if(!StringUtils.hasText(leaderId)) return false;
-        return heartbeatService.isLeaderOnline();
+    @Override
+    public String getVotedLeaderForTerm(int term) {
+        String leaderId = termToVotedNode.get(term);
+        if(leaderId == null) return "";
+        return leaderId;
     }
 
     private List<ResponseVote> sendVoteRequests(NodeState nodeState) {
