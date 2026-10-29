@@ -6,7 +6,7 @@ import lombok.Getter;
 @Builder
 @Getter
 public class RequestVote {
-    private int term;
+    private long term;
     private String candidateName;
     private String candidateData;
 }

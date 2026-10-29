@@ -20,7 +20,7 @@ public class ElectionServiceImpl implements ElectionService {
     private final RaftClusterInformation raftClusterInformation;
     private final RequestVoteRepository requestVoteRepository;
     //maps a term to a node it has voted for as a leader
-    private final Map<Integer, String> termToVotedNode;
+    private final Map<Long, String> termToVotedNode;
     private final int majority;
 
     public ElectionServiceImpl(RaftClusterInformation raftClusterInformation,
@@ -32,7 +32,7 @@ public class ElectionServiceImpl implements ElectionService {
     }
 
     @Override
-    public void electLeader() {
+    public void candidateAsLeader() {
         //increment term
         NodeState nodeState = raftClusterInformation.getNodeState();
         nodeState.setState(NodeState.State.CANDIDATE);
@@ -55,10 +55,37 @@ public class ElectionServiceImpl implements ElectionService {
     }
 
     @Override
-    public String getVotedLeaderForTerm(int term) {
+    public String getVotedLeaderForTerm(long term) {
         String leaderId = termToVotedNode.get(term);
         if(leaderId == null) return "";
         return leaderId;
+    }
+
+    @Override
+    public ResponseVote handleRequestVote(RequestVote requestVote) {
+        var nodeState = raftClusterInformation.getNodeState();
+        int candidatesTerm = requestVote.getTerm();
+        String candidateId = requestVote.getCandidateName();
+        if(nodeState.getTerm() > candidatesTerm) {
+            //candidate's term cannot be older than my current term
+            return ResponseVote.builder().voteGranted(false)
+                .term(nodeState.getTerm())
+                .build();
+        }
+        String votedLeaderForThisTerm = getVotedLeaderForTerm(candidatesTerm);
+        if(!votedLeaderForThisTerm.equals(requestVote.getCandidateName())) {
+            //i have already voted for someone else
+            return ResponseVote.builder().voteGranted(false)
+                .term(nodeState.getTerm())
+                .build();
+        }
+
+        //accept the candidate on this term
+        termToVotedNode.put(candidatesTerm, candidateId);
+        return ResponseVote.builder()
+            .voteGranted(true)
+            .term(candidatesTerm)
+            .build();
     }
 
     private List<ResponseVote> sendVoteRequests(NodeState nodeState) {

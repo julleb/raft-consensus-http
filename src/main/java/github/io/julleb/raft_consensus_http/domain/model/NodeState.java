@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 public class NodeState {
     //TODO it should be locks here.
-    private int term;
+    private long term;
     //leaderId points to the nodeIp
     private String leaderId;
     private String currentData;
