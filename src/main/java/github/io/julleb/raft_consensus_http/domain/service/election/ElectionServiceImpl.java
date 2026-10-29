@@ -36,7 +36,7 @@ public class ElectionServiceImpl implements ElectionService {
         //increment term
         NodeState nodeState = raftClusterInformation.getNodeState();
         nodeState.setState(NodeState.State.CANDIDATE);
-        int newTerm = nodeState.getTerm() + 1;
+        long newTerm = nodeState.getTerm() + 1;
         nodeState.setTerm(newTerm);
 
         //vote for myself
@@ -64,7 +64,7 @@ public class ElectionServiceImpl implements ElectionService {
     @Override
     public ResponseVote handleRequestVote(RequestVote requestVote) {
         var nodeState = raftClusterInformation.getNodeState();
-        int candidatesTerm = requestVote.getTerm();
+        long candidatesTerm = requestVote.getTerm();
         String candidateId = requestVote.getCandidateName();
         if(nodeState.getTerm() > candidatesTerm) {
             //candidate's term cannot be older than my current term
