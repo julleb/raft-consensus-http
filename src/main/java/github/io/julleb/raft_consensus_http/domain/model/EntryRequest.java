@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class EntryRequest {
-    private int term;
+    private long term;
     private String leaderId;
 }

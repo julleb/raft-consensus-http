@@ -7,6 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Builder
 public class EntryResponseDto {
-    private int term;
+    private long term;
     private boolean success;
 }

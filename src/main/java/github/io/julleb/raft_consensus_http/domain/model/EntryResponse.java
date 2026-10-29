@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class EntryResponse {
-    private int term;
+    private long term;
     private boolean success;
 }
