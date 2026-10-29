@@ -72,8 +72,17 @@ public class ElectionServiceImpl implements ElectionService {
                 .term(nodeState.getTerm())
                 .build();
         }
+
+        //candidates term is higher, we must immediately change
+        if(candidatesTerm > nodeState.getTerm()) {
+            nodeState.setTerm(candidatesTerm);
+            nodeState.setState(NodeState.State.FOLLOWER);
+            nodeState.setLeaderId(null);
+        }
+
         String votedLeaderForThisTerm = getVotedLeaderForTerm(candidatesTerm);
-        if(!votedLeaderForThisTerm.equals(requestVote.getCandidateName())) {
+        boolean haveVoted = !votedLeaderForThisTerm.isEmpty();
+        if(haveVoted && !votedLeaderForThisTerm.equals(requestVote.getCandidateName())) {
             //i have already voted for someone else
             return ResponseVote.builder().voteGranted(false)
                 .term(nodeState.getTerm())
