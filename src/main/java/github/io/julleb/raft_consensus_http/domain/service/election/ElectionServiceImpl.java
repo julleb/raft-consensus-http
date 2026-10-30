@@ -71,6 +71,14 @@ public class ElectionServiceImpl implements ElectionService {
         var nodeState = raftClusterInformation.getNodeState();
         long candidatesTerm = requestVote.getTerm();
         String candidateId = requestVote.getCandidateName();
+
+        if(!raftClusterInformation.getIpOfNodes().contains(candidateId)) {
+            log.error("candidateId {} not exist", candidateId);
+            return ResponseVote.builder().voteGranted(false)
+                .term(nodeState.getTerm())
+                .build();
+        }
+
         if(nodeState.getTerm() > candidatesTerm) {
             //candidate's term cannot be older than my current term
             return ResponseVote.builder().voteGranted(false)
