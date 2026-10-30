@@ -1,5 +1,6 @@
 package github.io.julleb.raft_consensus_http.domain.model;
 
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -12,7 +13,11 @@ public class NodeState {
     private long electionTimeoutMilliseconds
         = ThreadLocalRandom.current().nextLong(150, 300);
     private long lastHeardFromLeaderTimestampMilliseconds;
+    private final Semaphore leader = new Semaphore(0);
 
+    public void waitForLeadership() throws InterruptedException {
+        leader.acquire();
+    }
 
     public synchronized long getTerm() {
         return term;
@@ -44,6 +49,9 @@ public class NodeState {
 
     public synchronized void setState(State state) {
         this.state = state;
+        if(this.state == State.LEADER) {
+            leader.release();
+        }
     }
 
     public synchronized long getElectionTimeoutMilliseconds() {

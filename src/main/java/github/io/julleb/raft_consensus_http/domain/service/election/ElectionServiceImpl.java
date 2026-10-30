@@ -4,15 +4,12 @@ import github.io.julleb.raft_consensus_http.domain.model.NodeState;
 import github.io.julleb.raft_consensus_http.domain.model.RaftClusterInformation;
 import github.io.julleb.raft_consensus_http.domain.model.RequestVote;
 import github.io.julleb.raft_consensus_http.domain.model.ResponseVote;
-import github.io.julleb.raft_consensus_http.domain.service.heartbeat.HeartbeatService;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 @Service
 @Slf4j

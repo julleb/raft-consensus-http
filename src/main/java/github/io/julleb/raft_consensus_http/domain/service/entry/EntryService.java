@@ -7,5 +7,5 @@ public interface EntryService {
 
     AppendEntryResult appendEntries(EntryRequest entryRequest);
 
-    void sendEntries();
+    void sendEntries() throws InterruptedException;
 }

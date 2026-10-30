@@ -2,17 +2,29 @@ package github.io.julleb.raft_consensus_http.domain.service.entry;
 
 import github.io.julleb.raft_consensus_http.domain.model.AppendEntryResult;
 import github.io.julleb.raft_consensus_http.domain.model.EntryRequest;
+import github.io.julleb.raft_consensus_http.domain.model.EntryResponse;
 import github.io.julleb.raft_consensus_http.domain.model.NodeState;
 import github.io.julleb.raft_consensus_http.domain.model.RaftClusterInformation;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class EntryServiceImpl implements EntryService {
 
     private final RaftClusterInformation raftClusterInformation;
+    private final EntryRepository entryRepository;
 
-    EntryServiceImpl(RaftClusterInformation raftClusterInformation) {
+    EntryServiceImpl(RaftClusterInformation raftClusterInformation,
+        EntryRepository entryRepository) {
         this.raftClusterInformation = raftClusterInformation;
+        this.entryRepository = entryRepository;
     }
 
     @Override
@@ -48,7 +60,49 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
-    public void sendEntries() {
+    public void sendEntries() throws InterruptedException {
+        var nodeState = raftClusterInformation.getNodeState();
+
+        ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
+        ExecutorService executor =
+            Executors.newFixedThreadPool(10);
+
+        var ipOfNodes = raftClusterInformation.getIpOfNodes()
+            .stream()
+            .filter(ip -> ip.equals(nodeState.getNodeName()))
+            .collect(Collectors.toSet());
+        while(true) {
+            nodeState.waitForLeadership();
+            log.info("Im the leader");
+
+            var shouldCancel = new Semaphore(0);
+            var future = scheduler.scheduleAtFixedRate(() -> {
+                long term = nodeState.getTerm();
+                String leader = nodeState.getNodeName();
+                if (nodeState.getState() != NodeState.State.LEADER) {
+                    shouldCancel.release();
+                    return;
+                }
+                EntryRequest entryRequest = EntryRequest.builder()
+                    .leaderId(leader)
+                    .term(term)
+                    .build();
+                for (String nodeIp : ipOfNodes) {
+                    EntryResponse response = entryRepository.sendEntry(nodeIp, entryRequest);
+                    if (!response.isSuccess()) {
+                       if (term < response.getTerm()) {
+                          shouldCancel.release();
+                       }
+                    }
+                }
+
+            }, 0, 3, TimeUnit.SECONDS);
+
+            //block here until i lose leadership
+            shouldCancel.acquire();
+            future.cancel(true);
+        }
 
     }
 }
