@@ -1,10 +1,11 @@
 package github.io.julleb.raft_consensus_http.web.DTO;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
 public class RequestVoteDto {
     private long term;
     private String candidateId;

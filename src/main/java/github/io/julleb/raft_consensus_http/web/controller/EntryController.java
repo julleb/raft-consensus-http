@@ -4,7 +4,6 @@ import github.io.julleb.raft_consensus_http.domain.model.EntryRequest;
 import github.io.julleb.raft_consensus_http.domain.service.entry.EntryService;
 import github.io.julleb.raft_consensus_http.web.DTO.EntryRequestDto;
 import github.io.julleb.raft_consensus_http.web.DTO.EntryResponseDto;
-import github.io.julleb.raft_consensus_http.web.DTO.HeartbeatDto;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
