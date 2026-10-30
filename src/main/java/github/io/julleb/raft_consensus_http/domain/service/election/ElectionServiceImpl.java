@@ -33,11 +33,19 @@ public class ElectionServiceImpl implements ElectionService {
 
     @Override
     public void candidateAsLeader() {
-        //increment term
         NodeState nodeState = raftClusterInformation.getNodeState();
+        long now = System.currentTimeMillis();
+        if(now < nodeState.getLastHeardFromLeaderTimestampMilliseconds() + nodeState.getElectionTimeoutMilliseconds()) {
+            return;
+        }
+
+        //increment term
         nodeState.setState(NodeState.State.CANDIDATE);
         long newTerm = nodeState.getTerm() + 1;
         nodeState.setTerm(newTerm);
+
+        //clear the leader
+        nodeState.setLeaderId(null);
 
         //vote for myself
         termToVotedNode.put(nodeState.getTerm(), nodeState.getNodeName());

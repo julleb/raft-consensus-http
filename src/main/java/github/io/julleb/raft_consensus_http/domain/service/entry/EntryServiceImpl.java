@@ -28,7 +28,7 @@ public class EntryServiceImpl implements EntryService {
                 .build();
         }
 
-        //another node in the same term wants to be leader, reject it
+        //another node in the same term wants to be leader, while im the leader. Reject it
         if(leaderTerm == nodeState.getTerm() && nodeState.getState() == NodeState.State.LEADER) {
             return AppendEntryResult.builder()
                 .success(false)
