@@ -83,6 +83,7 @@ public class EntryServiceImpl implements EntryService {
             shouldCancel.acquire();
             future.cancel(true);
             scheduler.close();
+            log.info("Im follower now");
         }
     }
 

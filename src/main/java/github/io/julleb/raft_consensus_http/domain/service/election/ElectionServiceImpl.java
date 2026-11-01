@@ -105,6 +105,7 @@ public class ElectionServiceImpl implements ElectionService {
 
         //accept the candidate on this term
         termToVotedNode.put(candidatesTerm, candidateId);
+        log.info("Im voting for {} in term {}", candidateId, candidatesTerm);
         return ResponseVote.builder()
             .voteGranted(true)
             .term(candidatesTerm)
