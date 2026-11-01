@@ -17,6 +17,7 @@ public class ElectionServiceImpl implements ElectionService {
     private final RaftClusterInformation raftClusterInformation;
     private final RequestVoteRepository requestVoteRepository;
     //maps a term to a node it has voted for as a leader
+    //TODO this map will just grow. Not good
     private final Map<Long, String> termToVotedNode;
     private final int majority;
 
