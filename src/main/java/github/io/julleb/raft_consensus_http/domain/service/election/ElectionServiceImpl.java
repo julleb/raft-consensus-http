@@ -32,6 +32,7 @@ public class ElectionServiceImpl implements ElectionService {
     public void candidateAsLeader() {
         NodeState nodeState = raftClusterInformation.getNodeState();
         long now = System.currentTimeMillis();
+        if(nodeState.getState() == NodeState.State.LEADER) return;
         if(now < nodeState.getLastHeardFromLeaderTimestampMilliseconds() + nodeState.getElectionTimeoutMilliseconds()) {
             return;
         }
@@ -52,8 +53,7 @@ public class ElectionServiceImpl implements ElectionService {
         long votes = responseVotes.stream().filter(ResponseVote::isVoteGranted).count();
         votes++; //calculate my own vote
         if(votes < majority) {
-            log.debug("I don't have majority to be the leader");
-            //before we set FOLLOWER, we need to check that we are a candidate
+            log.info("I don't have majority to be the leader");
             nodeState.setState(NodeState.State.FOLLOWER);
             return;
         }
@@ -123,6 +123,7 @@ public class ElectionServiceImpl implements ElectionService {
             try {
                 ResponseVote responseVote = requestVoteRepository.request(nodeIp, requestVote);
                 if (responseVote.isVoteGranted()) {
+                    log.info("Node {} voted for me in term {}", nodeIp, requestVote.getTerm());
                     responseVotes.add(responseVote);
                 } else {
                     if(responseVote.getTerm() > nodeState.getTerm()) {

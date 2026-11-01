@@ -1,5 +1,7 @@
 package github.io.julleb.raft_consensus_http.domain.service.entry;
 
+import static github.io.julleb.raft_consensus_http.domain.model.RaftClusterInformation.SEND_ENTRIES_MILLISECOND_INTERVAL;
+
 import github.io.julleb.raft_consensus_http.domain.model.AppendEntryResult;
 import github.io.julleb.raft_consensus_http.domain.model.EntryRequest;
 import github.io.julleb.raft_consensus_http.domain.model.EntryResponse;
@@ -30,6 +32,7 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public AppendEntryResult appendEntries(EntryRequest entryRequest) {
+        long timestamp = System.currentTimeMillis();
         var nodeState = raftClusterInformation.getNodeState();
         String leaderId = entryRequest.getLeaderId();
         long leaderTerm = entryRequest.getTerm();
@@ -49,13 +52,13 @@ public class EntryServiceImpl implements EntryService {
                 .build();
         }
 
-        long timestamp = System.currentTimeMillis();
         nodeState.setLastHeardFromLeaderTimestampMilliseconds(timestamp);
         nodeState.setLeaderId(leaderId);
         nodeState.setTerm(leaderTerm);
         nodeState.setState(NodeState.State.FOLLOWER);
+        log.info("Appending entries from leader {}", leaderId);
         return AppendEntryResult.builder()
-            .success(false)
+            .success(true)
             .term(leaderTerm)
             .build();
     }
@@ -69,20 +72,22 @@ public class EntryServiceImpl implements EntryService {
 
         var ipOfNodes = raftClusterInformation.getIpOfNodes()
             .stream()
-            .filter(ip -> ip.equals(nodeState.getNodeName()))
+            .filter(ip -> !ip.equals(nodeState.getNodeName()))
             .collect(Collectors.toList());
-        while(true) {
-            nodeState.waitForLeadership();
+        while (true) {
+            nodeState.waitForStateChange();
+            if(nodeState.getState() != NodeState.State.LEADER) continue;
             log.info("Im the leader");
 
             var shouldCancel = new Semaphore(0);
             var future = scheduler.scheduleAtFixedRate(() -> {
                     sendEntries(shouldCancel, nodeState, ipOfNodes);
-                }, 0, 3, TimeUnit.SECONDS);
+                }, 0, SEND_ENTRIES_MILLISECOND_INTERVAL, TimeUnit.SECONDS);
             //block here until I lose leadership
             shouldCancel.acquire();
             future.cancel(true);
             scheduler.close();
+            nodeState.setState(NodeState.State.FOLLOWER);
             log.info("Im follower now");
         }
     }
@@ -101,12 +106,15 @@ public class EntryServiceImpl implements EntryService {
         for (String nodeIp : ipOfNodes) {
             EntryResponse response = null;
             try {
+                log.info("Sending entry to {}", nodeIp);
                 response = entryRepository.sendEntry(nodeIp, entryRequest);
             } catch(Exception e) {
                 //node is not responding
+                log.error("Node {} not responding. Message={}", nodeIp, e.getMessage());
                 continue;
             }
             if (!response.isSuccess()) {
+                log.info("EntryResponse not success from node {}", nodeIp);
                 if (term < response.getTerm()) {
                     shouldCancelSending.release();
                 }

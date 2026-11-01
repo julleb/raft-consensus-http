@@ -9,6 +9,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class RaftClusterInformation {
     private List<String> ipOfNodes;
     private final NodeState nodeState = new NodeState();
+    public static int SEND_ENTRIES_MILLISECOND_INTERVAL = 3000;
+    public static int RANDOMNESS_IN_ELECTION_TIME_MIN = SEND_ENTRIES_MILLISECOND_INTERVAL + 500;
+    public static int RANDOMNESS_IN_ELECTION_TIME_MAX = SEND_ENTRIES_MILLISECOND_INTERVAL + 1000;
+
 
     void setIpOfNodes(List<String> ipOfNodes) {
         this.ipOfNodes = ipOfNodes;
