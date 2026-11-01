@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ResponseVoteDto {
-    private long term;
+    private Long term;
     private boolean voteGranted;
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 
 public class NodeState {
-    private long term;
+    private long term = 0;
     //leaderId points to the nodeIp
     private String leaderId;
     private String nodeName;

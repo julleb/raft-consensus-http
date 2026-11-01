@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class EntryRequestDto {
-    private long term;
+    private Long term;
     private String leaderId;
 }

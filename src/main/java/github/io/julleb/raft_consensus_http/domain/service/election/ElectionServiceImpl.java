@@ -35,11 +35,12 @@ public class ElectionServiceImpl implements ElectionService {
         if(now < nodeState.getLastHeardFromLeaderTimestampMilliseconds() + nodeState.getElectionTimeoutMilliseconds()) {
             return;
         }
-
         //increment term
         nodeState.setState(NodeState.State.CANDIDATE);
         long newTerm = nodeState.getTerm() + 1;
         nodeState.setTerm(newTerm);
+
+        log.info("Candidate as a leader with term {}", nodeState.getTerm());
 
         //clear the leader
         nodeState.setLeaderId(null);
@@ -118,8 +119,19 @@ public class ElectionServiceImpl implements ElectionService {
         List<ResponseVote> responseVotes = new ArrayList<>();
         for(String nodeIp : raftClusterInformation.getIpOfNodes()) {
             if(nodeIp.equals(nodeState.getNodeName())) continue; //dont send to yourself
-            ResponseVote responseVote = requestVoteRepository.request(nodeIp, requestVote);
-            responseVotes.add(responseVote);
+            try {
+                ResponseVote responseVote = requestVoteRepository.request(nodeIp, requestVote);
+                if (responseVote.isVoteGranted()) {
+                    responseVotes.add(responseVote);
+                } else {
+                    if(responseVote.getTerm() > nodeState.getTerm()) {
+                        nodeState.setTerm(responseVote.getTerm());
+                    }
+                }
+
+            } catch(Exception e) {
+                log.error("Error from Node. Message={}", e.getMessage());
+            }
         }
         return responseVotes;
     }

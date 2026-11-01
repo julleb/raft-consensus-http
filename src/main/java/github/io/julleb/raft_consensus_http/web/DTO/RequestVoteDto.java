@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Builder
 public class RequestVoteDto {
-    private long term;
+    private Long term;
     private String candidateId;
     private String candidateData;
 }
